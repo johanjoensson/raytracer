@@ -3,30 +3,24 @@
 #include "color.h"
 #include "ray.h"
 #include "hittable.h"
+#include "hittable_list.h"
+#include "camera.h"
 
-double hit_sphere(const Point3& center, double radius, const Ray& r)
-{
-        Vec3 oc = r.origin() - center;
-        double a = r.direction().norm2();
-        double half_b = dot(oc, r.direction());
-        double c = oc.norm2() - radius*radius;
-        double discriminant = half_b*half_b - a*c;
-        if (discriminant < 0){
-                return -1;
-        }else{
-                return (-half_b - sqrt(discriminant)) / a;
-        }
-}
+#include "utils.h"
 
-Color3 ray_color(const Ray& r)
+Color3 ray_color(const Ray& r, const Hittable& world, const int depth)
 {
-        double t = hit_sphere(Point3(0,0,-1), 0.5, r);
-        if (t > 0){
-                Vec3 N(unit_vector(r.at(t) - Vec3(0,0,-1)));
-                return 0.5*Color3(N.x() + 1, N.y() + 1, N.z() + 1);
+        if(depth <= 0){
+                return Color3(0, 0, 0);
         }
+        auto hit = world.hit(r, 1e-10, infinity);
+        if(hit){
+                //Point3 target = hit->p + hit->normal + random_in_hemisphere(hit->normal);
+                Point3 target = hit->p + hit->normal + random_unit_vector();
+                return 0.5*ray_color(Ray(hit->p, target - hit->p), world, depth - 1);
+        }        
         Vec3 unit_direction {unit_vector(r.direction())};
-        t = 0.5*(unit_direction.y() + 1.0);
+        double t = 0.5*(unit_direction.y() + 1.0);
         return (1. - t)*Color3(1., 1., 1.) + t*Color3(0.5, 0.7, 1.);
 }
 
@@ -34,27 +28,28 @@ int main(){
         const double aspect_ratio = 16./9;
         const int image_width = 400;
         const int image_height = static_cast<int>(image_width/aspect_ratio);
+        const int samples_per_pixel = 100;
+        const int max_depth = 50;
 
-        double viewport_height = 2;
-        double viewport_width = aspect_ratio * viewport_height;
-        double focal_length = 1;
+        Hittable_list world;
+        world.add(std::make_unique<Sphere>(Point3(0, 0, -1), 0.5));
+        world.add(std::make_unique<Sphere>(Point3(0, -100.5, -1), 100));
 
-        Point3 origin{0,0,0};
-        Vec3 horizontal(viewport_width, 0, 0);
-        Vec3 vertical(0, viewport_height, 0);
-        Point3 lower_left_corner = origin - horizontal/2 - vertical/2 - Vec3(0, 0, focal_length);
-
+        Camera cam;
 
         std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
 
         for(int j = image_height -1; j >= 0; j--){
                 std::cerr << "\rScanlines remaining: " << j << " " << std::flush;
                 for(int i = 0; i < image_width; i++){
-                        double u = double(i) / (image_width - 1);
-                        double v = double(j) / (image_height - 1);
-                        Ray r (origin, lower_left_corner + u*horizontal + v*vertical - origin);
-                        Color3 pixel_color(ray_color(r));
-                        write_color(std::cout, pixel_color);
+                        Color3 pixel_color(0, 0, 0);
+                        for(int s = 0; s < samples_per_pixel; s++){
+                                double u = (i + random_double()) / (image_width - 1);
+                                double v = (j + random_double()) / (image_height - 1);
+                                Ray r(cam.get_ray(u, v));
+                                pixel_color += ray_color(r, world, max_depth);
+                        }
+                        write_color(std::cout, pixel_color, samples_per_pixel);
                 }
         }
         std::cerr << "\nDone\n";

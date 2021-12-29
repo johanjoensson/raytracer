@@ -11,7 +11,7 @@ struct Hit_record{
         double t;
         bool front_face;
 
-        Hit_record(const Point3& point, const Vec3 outwards_normal, double intersection, const Ray& r)
+        Hit_record(const Point3& point, const Vec3& outwards_normal, const double intersection, const Ray& r)
                 : p(point), normal(outwards_normal), t(intersection), front_face(dot(r.direction(), outwards_normal) < 0)
         {
                 if(!front_face){
@@ -41,7 +41,7 @@ class Sphere : public Hittable{
                         double c = oc.norm2() - m_radius*m_radius;
                         double discriminant = half_b*half_b - a*c;
                         if (discriminant < 0){
-                                return {};
+                                return std::nullopt;
                         }
                         double sqrtd = sqrt(discriminant);
 
@@ -49,11 +49,12 @@ class Sphere : public Hittable{
                         if (root < t_min || t_max < root){
                                 root = (-half_b + sqrtd)/a;
                                 if(root < t_min || t_max < root){
-                                        return {};
+                                        return std::nullopt;
                                 }
                         }
                         Vec3 outwards_normal = (r.at(root) - m_center)/m_radius;
                         Hit_record rec(r.at(root), outwards_normal, root, r);
+
                         return rec;
                 }
 

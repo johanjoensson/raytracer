@@ -1,6 +1,8 @@
 #ifndef RAY_COLOR_H
 #define RAY_COLOR_H
+
 #include "vec.h"
+#include "utils.h"
 
 class Color3 : public VecD_Base<3>{
         public:
@@ -18,11 +20,12 @@ class Color3 : public VecD_Base<3>{
                 Color3() : VecD_Base() {}
 };
 
-void write_color(std::ostream& out, const Color3& color)
+inline void write_color(std::ostream& out, const Color3& color, const int samples_per_pixel)
 {
-        out << static_cast<int>(255.999 * color.r()) << " "
-            << static_cast<int>(255.999 * color.g()) << " "
-            << static_cast<int>(255.999 * color.b()) << "\n";
+        double scale = 1./samples_per_pixel;
+        out << static_cast<int>(256 * clamp(std::sqrt(scale*color.r()), 0, 0.999)) << " "
+            << static_cast<int>(256 * clamp(std::sqrt(scale*color.g()), 0, 0.999)) << " "
+            << static_cast<int>(256 * clamp(std::sqrt(scale*color.b()), 0, 0.999)) << "\n";
 }
 
 class Color4 : public VecD_Base<4>{
@@ -43,12 +46,13 @@ class Color4 : public VecD_Base<4>{
                 Color4() : VecD_Base() {}
 };
 
-void write_color(std::ostream& out, const Color4& color)
+inline void write_color(std::ostream& out, const Color4& color, const int samples_per_pixel)
 {
-        out << static_cast<int>(255.999 * color.r()) << " "
-            << static_cast<int>(255.999 * color.g()) << " "
-            << static_cast<int>(255.999 * color.b()) << " "
-            << static_cast<int>(255.999 * color.a()) << "\n";
+        double scale = 1./samples_per_pixel;
+        out << static_cast<int>(255.999 * clamp(std::sqrt(scale*color.r()), 0, 0.999)) << " "
+            << static_cast<int>(255.999 * clamp(std::sqrt(scale*color.g()), 0, 0.999)) << " "
+            << static_cast<int>(255.999 * clamp(std::sqrt(scale*color.b()), 0, 0.999)) << " "
+            << static_cast<int>(255.999 * clamp(std::sqrt(scale*color.a()), 0, 0.999)) << "\n";
 }
 
 #endif // RAY_COLOR_H

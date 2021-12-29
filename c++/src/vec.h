@@ -1,5 +1,6 @@
 #ifndef RAY_VEC_H
 #define RAY_VEC_H
+#include "utils.h"
 #include <cmath>
 #include <algorithm>
 #include <numeric>
@@ -57,8 +58,8 @@ class VecD_Base{
                 double& operator[](const size_t i){ return m_data[i];}
                 VecD_Base operator-() const 
                 {
-                        std::array<double, D> res;
-                        std::transform(std::execution::par, std::cbegin(m_data), std::cend(m_data), std::begin(res),
+                        VecD_Base res = *this;
+                        std::transform(std::execution::par, std::cbegin(res.m_data), std::cend(res.m_data), std::begin(res.m_data),
                                         [](const double v){return -v;}
                                         );
                         return res;
@@ -177,6 +178,11 @@ class Vec3 : public VecD_Base<3>{
                                     );
                 }
 
+                inline static Vec3 random(const double min = 0, const double max = 1)
+                {
+                        return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+                }
+
                 Vec3(const double a, const double b, const double c)
                         : VecD_Base({a, b, c})
                         {}
@@ -190,6 +196,27 @@ class Vec3 : public VecD_Base<3>{
 };
 using Point3 = Vec3;
 
+Vec3 random_inside_unit_sphere() {
+        Vec3 v(Vec3::random(-1, 1));
+        while(v.norm2() > 1){
+                v = Vec3::random(-1, 1);
+        }
+        return v;
+}
+
+Vec3 random_unit_vector(){
+        return unit_vector(random_inside_unit_sphere());
+}
+
+Vec3 random_in_hemisphere(const Vec3& normal)
+{
+        Vec3 in_unit_sphere = random_inside_unit_sphere();
+        if(dot(in_unit_sphere, normal) > 0){
+                return in_unit_sphere;
+        }else{
+                return -in_unit_sphere;
+        }
+}
 class Vec4 : public VecD_Base<4>{
         public:
                 double& x() {return m_data[0];}
