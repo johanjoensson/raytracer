@@ -4,20 +4,32 @@
 #include "ray.h"
 #include "vec.h"
 #include <optional>
+#include <memory>
+
+class Material;
 
 struct Hit_record{
         Point3 p;
         Vec3 normal;
+        Material* material_ptr;
         double t;
         bool front_face;
 
-        Hit_record(const Point3& point, const Vec3& outwards_normal, const double intersection, const Ray& r)
-                : p(point), normal(outwards_normal), t(intersection), front_face(dot(r.direction(), outwards_normal) < 0)
+        Hit_record(Point3&& point, Vec3&& outwards_normal, Material* material, const double intersection, const Ray& r)
+                : p(std::move(point)), normal(std::move(outwards_normal)), material_ptr(material), t(intersection), front_face(dot(r.direction(), outwards_normal) < 0)
         {
                 if(!front_face){
                         normal *= -1;
                 }
         }
+
+        Hit_record() :p(), normal(), material_ptr(nullptr), t(), front_face() {}
+        Hit_record(const Hit_record&) = delete;
+        Hit_record(Hit_record&&) = default;
+        ~Hit_record() = default;
+
+        Hit_record& operator=(const Hit_record&) = delete;
+        Hit_record& operator=(Hit_record&&) = default;
 };
 
 class Hittable{
@@ -36,9 +48,9 @@ class Sphere : public Hittable{
                 virtual std::optional<Hit_record> hit(const Ray& r, const double t_min, const double t_max) const override
                 {
                         Vec3 oc = r.origin() - m_center;
-                        double a = r.direction().norm2();
+                        double a = 1; // r.direction().norm2();
                         double half_b = dot(oc, r.direction());
-                        double c = oc.norm2() - m_radius*m_radius;
+                        double c = oc.squaredNorm() - m_radius*m_radius;
                         double discriminant = half_b*half_b - a*c;
                         if (discriminant < 0){
                                 return std::nullopt;
@@ -53,18 +65,19 @@ class Sphere : public Hittable{
                                 }
                         }
                         Vec3 outwards_normal = (r.at(root) - m_center)/m_radius;
-                        Hit_record rec(r.at(root), outwards_normal, root, r);
+                        Hit_record rec(r.at(root), std::move(outwards_normal), m_material_ptr.get(), root, r);
 
                         return rec;
                 }
 
-                Sphere(const Point3& center, const double r)
-                        : Hittable(), m_center(center), m_radius(r)
+                Sphere(Point3&& center, const double r, std::shared_ptr<Material>&& material)
+                        : Hittable(), m_center(std::move(center)), m_radius(r), m_material_ptr(material)
                 {}
                 Sphere() = default;
         private:
                 Point3 m_center;
                 double m_radius;
+                std::shared_ptr<Material> m_material_ptr;
 
 };
 #endif // RAY_HITTABLE_H

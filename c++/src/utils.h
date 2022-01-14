@@ -12,10 +12,21 @@ inline double degree_to_radian(const double degrees)
         return degrees*pi/180;
 }
 
+inline double random_normal_double(const double mean = 0, const double stddev = 1.0)
+{
+        static std::random_device rd;
+        static std::mt19937 generator(rd());
+        // static std::default_random_engine generator(rd());
+
+        std::normal_distribution<double> distribution(mean, stddev);
+        return distribution(generator);
+}
+
 inline double random_double(const double min = 0, const double max = 1.0)
 {
         static std::random_device rd;
         static std::mt19937 generator(rd());
+        // static std::default_random_engine generator(rd());
 
         std::uniform_real_distribution<double> distribution(min, max);
         return distribution(generator);

@@ -6,18 +6,18 @@
 class Ray {
         public:
                 Point3 at(const double t) const {return m_origin + t*m_direction;}
-                Vec3 direction() const {return m_direction;}
-                Point3 origin() const {return m_origin;}
+                const Vec3& direction() const {return m_direction;}
+                const Point3& origin() const {return m_origin;}
 
                 Ray() = default;
-                Ray(const Point3& origin, const Vec3& direction)
-                        : m_origin(origin), m_direction(direction)
+                Ray(Point3 origin, Vec3 direction)
+                        : m_origin(std::move(origin)), m_direction(unit_vector(direction))
                 {}
 
-                Ray(const Ray&) = default;
+                Ray(const Ray&) = delete;
                 Ray(Ray&&) = default;
 
-                Ray& operator=(const Ray&) = default;
+                Ray& operator=(const Ray&) = delete;
                 Ray& operator=(Ray&&) = default;
                 ~Ray() = default;
         private:

@@ -7,11 +7,16 @@ project(
 	LANGUAGES CXX
 )
 
-# set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+if(CMAKE_BUILD_TYPE)
+        message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
+endif()
 
-# find_package(GSLpp
-# 		HINTS /home/jjonsson/Programming/GSL-lib/install
-# 		REQUIRED)
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_CXX_FLAGS_RELEASE  "-Ofast -funsafe-math-optimizations -march=native")
+endif()
+message(STATUS "CXXFLAGS = ${CMAKE_CXX_FLAGS_RELEASE}")
+
+find_package (Eigen3 REQUIRED NO_MODULE)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
